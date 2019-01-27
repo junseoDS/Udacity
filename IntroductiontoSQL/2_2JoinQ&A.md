@@ -1,9 +1,9 @@
 ## Your First JOIN
 
-  SELECT orders.*
-  FROM orders
-  JOIN accounts
-  ON orders.account_id = accounts.id
+    SELECT orders.*
+    FROM orders
+    JOIN accounts
+    ON orders.account_id = accounts.id
 
 
 Q1.
