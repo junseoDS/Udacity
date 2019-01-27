@@ -6,3 +6,6 @@ Studying with Udacity
 
 running queries with relational databases and working with Unix shell and Git>
 
+
+
+### If there is any problem about rights authority, please tell me.
