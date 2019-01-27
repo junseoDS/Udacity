@@ -1,7 +1,7 @@
 # Your Fist Queries in SQL
 
-SELECT id, account_id, occurred_at
-FROM orders
+  SELECT id, account_id, occurred_at
+  FROM orders
 
 ## Quiz LIMIT
 ### Q1
