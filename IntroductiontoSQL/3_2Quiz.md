@@ -289,10 +289,130 @@ Have any sales reps worked on more than one account?
     SELECT DISTINCT id, name
     FROM sales_reps;
 
+## Quiz HAVING
+
+#### Confusion about the difference between WHERE and HAVING
+> WHERE subsets the returned data based on a logical condition.
+> WHERE appears after the FROM,JOIN, and ON clauses, but before GROUP BY.
+> HAVING appears after the GROUP BY clause, but before the ORDERE BY clause.
+> HAVING is like WHERE, but it works on logical statements invoning aggregations.
 
 
+### Q1
+How many of the sales reps have more than 5 accounts that they manage?
+
+### A1
+    SELECT s.name, COUNT(a.name) AS account_count
+    FROM sales_reps AS s
+    JOIN accounts AS a
+    ON a.sales_rep_id = s.id
+    GROUP BY s.name
+    HAVING COUNT(a.name) >=5
+    ORDER BY s.name
+### Q2
+How many accounts have more than 20 orders?
+
+### A2
+    SELECT a.name, COUNT(*) AS count_orders
+    FROM accounts AS a
+    JOIN orders AS o
+    ON a.id = o.account_id
+    GROUP BY a.name
+    HAVING COUNT(*)>=20
+
+### Q3
+Which account has the most orders?
+
+### A3
+    SELECT a.name, COUNT(*) AS count_orders
+    FROM accounts AS a
+    JOIN orders AS o
+    ON a.id = o.account_id
+    GROUP BY a.name
+    HAVING COUNT(*)>=20
+    ORDER BY COUNT(*) DESC
+    LIMIT 1
+### Q4
+Which accounts spent more than 30,000 usd total across all orders?
+
+### A4
+    SELECT a.name, SUM(o.total_amt_usd)
+    FROM accounts AS a
+    JOIN orders AS o
+    ON a.id=o.account_id
+    GROUP BY a.name
+    HAVING SUM(o.total_amt_usd)>=30000
+
+### Q5
+Which accounts spent less than 1,000 usd total across all orders?
+
+### A5
+    SELECT a.name, SUM(o.total_amt_usd)
+    FROM accounts AS a
+    JOIN orders AS o
+    ON a.id=o.account_id
+    GROUP BY a.name
+    HAVING SUM(o.total_amt_usd)<1000
+
+### Q6
+Which account has spent the most with us?
+
+### A6
+    SELECT a.name, SUM(o.total_amt_usd)
+    FROM accounts AS a
+    JOIN orders AS o
+    ON a.id=o.account_id
+    GROUP BY a.name
+    ORDER BY SUM(o.total_amt_usd) DESC
+    LIMIT 1
+
+### Q7
+Which account has spent the least with us?
+
+### A7
+    SELECT a.name, SUM(o.total_amt_usd)
+    FROM accounts AS a
+    JOIN orders AS o
+    ON a.id=o.account_id
+    GROUP BY a.name
+    ORDER BY SUM(o.total_amt_usd) 
+    LIMIT 1 
+### Q8
+Which accounts used facebook as a channel to contact customers more than 6 times?
+
+### A8
+    SELECT a.name, w.channel,COUNT(*)	
+    FROM accounts AS a
+    JOIN web_events AS w
+    ON a.id=w.account_id
+    GROUP BY a.name,w.channel
+    HAVING COUNT(*)>6 AND w.channel = 'facebook'
+### Q9
+Which account used facebook most as a channel? 
+
+### A9
+    SELECT a.name, w.channel,COUNT(*)	
+    FROM accounts AS a
+    JOIN web_events AS w
+    ON a.id=w.account_id
+    GROUP BY a.name,w.channel
+    HAVING COUNT(*)>6 AND w.channel = 'facebook'
+    ORDER BY COUNT(*) DESC
+    LIMIT 1
 
 
+### Q10
+Which channel was most frequently used by most accounts?
+
+### A10
+
+    SELECT a.name, w.channel,COUNT(*)	
+    FROM accounts AS a
+    JOIN web_events AS w
+    ON a.id=w.account_id
+    GROUP BY a.name,w.channel
+    ORDER BY COUNT(*) DESC
+    LIMIT 10
 
 
 
