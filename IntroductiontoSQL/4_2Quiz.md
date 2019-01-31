@@ -185,25 +185,166 @@ What is the lifetime average amount spent in terms of total_amt_usd for only the
        )
 
 
+## Quiz WITH
+
+#### WITH Quizzes
+###### Essentially a WITH statement performs the same task as a Subquery. Therefore, you can write any of the queries we worked with in the "Subquery Mania" using a WITH. That's what you'll do here. Try to perform each of the earlier queries again, but using a WITH instead of a subquery.
+
+### Q1
+Provide the name of the sales_rep in each region with the largest amount of total_amt_usd sales.
+
+### A1
+
+    WITH t1 AS (SELECT s.name sales_rep_name, r.name region_name, SUM(o.total_amt_usd) total_usd
+        FROM region r
+        JOIN sales_reps s
+        ON r.id = s.region_id
+        JOIN accounts a
+        ON a.sales_rep_id=s.id
+        JOIN orders o
+        ON a.id=o.account_id
+        GROUP BY 1,2
+        ORDER BY 2 ),
+
+        t2 AS (SELECT region_name, MAX(total_usd) largest_usd
+        FROM t1
+        GROUP BY 1)
+
+    SELECT t1.sales_rep_name, t2.region_name
+    FROM t1
+    JOIN t2
+    ON t1.region_name=t2.region_name AND total_usd = largest_usd
+    
+### Q2
+For the region with the largest sales total_amt_usd, how many total orders were placed? 
+
+### A2
+    WITH t1 AS (SELECT s.name sales_rep_name, r.name region_name, SUM(o.total_amt_usd) total_usd
+                FROM region r
+                JOIN sales_reps s
+                ON r.id = s.region_id
+                JOIN accounts a
+                ON a.sales_rep_id=s.id
+                JOIN orders o
+                ON a.id=o.account_id
+                GROUP BY 1,2
+                ORDER BY 2 ),
+
+    t2 AS (SELECT region_name, MAX(total_usd) largest_usd
+           FROM t1
+           GROUP BY 1),
+
+    t3 AS (SELECT t1.sales_rep_name, t2.region_name
+           FROM t1
+           JOIN t2
+           ON t1.region_name=t2.region_name AND total_usd = largest_usd)
+
+    SELECT t3.sales_rep_name, COUNT(o.total) total_order
+    FROM t3
+    JOIN region r
+    ON r.name= t3.region_name
+    JOIN sales_reps s
+    ON r.id = s.region_id
+    JOIN accounts a
+    ON a.sales_rep_id=s.id
+    JOIN orders o
+    ON a.id=o.account_id
+    GROUP BY 1
+
+### Q3
+For the name of the account that purchased the most (in total over their lifetime as a customer) standard_qty paper, how many accounts still had more in total purchases? 
+
+### A3
+
+    WITH t1 AS (SELECT a.name account_name, SUM(o.standard_qty) total_standard_qty
+                FROM accounts a
+                JOIN orders o
+                ON a.id=o.account_id
+                GROUP BY 1
+                ORDER BY 2 DESC)
+
+    SELECT COUNT(*)
+    FROM orders o
+    JOIN accounts a
+    ON o.account_id=a.id
+    JOIN  t1
+    ON t1.account_name = a.name
+    HAVING SUM(o.total) > MAX(t1.total_standard_qty)
 
 
+### Q4
+For the customer that spent the most (in total over their lifetime as a customer) total_amt_usd, how many web_events did they have for each channel?
+
+### A4
+    WITH t1 AS (SELECT a.name account_name, SUM(o.total_amt_usd) total_usd
+                FROM accounts a
+                JOIN orders o
+                ON a.id=o.account_id
+                GROUP BY 1
+                ORDER BY 2 DESC
+                LIMIT 1)
+
+    SELECT a.name, w.channel, COUNT(*)
+    FROM web_events w
+    JOIN accounts a
+    ON w.account_id=a.id
+    JOIN orders o
+    ON a.id=o.account_id
+    JOIN t1
+    ON t1.account_name = a.name
+    GROUP BY 1,2
+    HAVING a.name =  (SELECT name
+                      FROM t1)
 
 
+### Q5
+What is the lifetime average amount spent in terms of total_amt_usd for the top 10 total spending accounts?
 
+### A5
+    WITH t1 AS (SELECT a.name account_name, SUM(o.total_amt_usd) total_usd
+                FROM accounts a
+                JOIN orders o
+                ON a.id=o.account_id
+                GROUP BY 1
+                ORDER BY 2 DESC
+                LIMIT 10)
 
+    SELECT AVG(total_usd)
+    FROM t1
+### Q6
+What is the lifetime average amount spent in terms of total_amt_usd for only the companies that spent more than the average of all accounts.
 
+### Wrong A6
 
+    WITH t1 AS (SELECT a.name account_name, SUM(o.total_amt_usd) total_usd
+                FROM accounts a
+                JOIN orders o
+                ON a.id=o.account_id
+                GROUP BY 1
+                ORDER BY 2 DESC)
 
+    SELECT AVG(o.total_amt_usd) avg_top
+    FROM orders o
+    JOIN accounts a
+    ON o.account_id=a.id
+    JOIN t1
+    ON a.name=t1.account_name
+    HAVING SUM(o.total_amt_usd) > (SELECT AVG(t1.total_usd) avg_all
+                                     FROM t1)
 
-
-
-
-
-
-
-
-
-
+### A6
+    WITH t1 AS (
+       SELECT AVG(o.total_amt_usd) avg_all
+       FROM orders o
+       JOIN accounts a
+       ON a.id = o.account_id),
+    t2 AS (
+       SELECT o.account_id, AVG(o.total_amt_usd) avg_amt
+       FROM orders o
+       GROUP BY 1
+       HAVING AVG(o.total_amt_usd) > (SELECT * FROM t1))
+    SELECT AVG(avg_amt)
+    FROM t2
 
 
 
