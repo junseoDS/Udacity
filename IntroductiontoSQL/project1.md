@@ -118,6 +118,16 @@ HINT: One way to solve this is to create a count of movies using aggregations, s
 
 ### Answer 1
 
+    SELECT DISTINCT(f.title) film_title, c.name category_name,  COUNT(r.rental_date) AS rental_count
+    FROM category c
+    JOIN film_category fc ON c.category_id=fc.category_id
+    JOIN film f ON fc.film_id=f.film_id
+    JOIN inventory i ON f.film_id=i.film_id
+    JOIN rental r ON r.inventory_id=i.inventory_id
+    WHERE c.name ='Animation' OR c.name ='Children' OR c.name ='Classics' OR c.name ='Comedy' OR c.name= 'Family' OR c.name= 'Music'
+    GROUP BY 1,2
+    ORDER BY c.name
+
 
 ### Question 2
 Now we need to know how the length of rental duration of these family-friendly movies compares to the duration that all movies are rented for. Can you provide a table with the movie titles and divide them into 4 levels (first_quarter, second_quarter, third_quarter, and final_quarter) based on the quartiles (25%, 50%, 75%) of the rental duration for movies across all categories? Make sure to also indicate the category that these family-friendly movies fall into.
@@ -129,6 +139,17 @@ HINT: One way to solve it requires the use of percentiles, Window functions, sub
 
 ### Answer 2
 
+    SELECT film_title, category,rental_duration, NTILE(4) OVER (ORDER BY rental_duration) standard_quartile
+    FROM
+    (SELECT DISTINCT(f.title) film_title, c.name category, f.rental_duration rental_duration
+    FROM category c
+    JOIN film_category fc ON c.category_id=fc.category_id
+    JOIN film f ON fc.film_id=f.film_id
+    JOIN inventory i ON f.film_id=i.film_id
+    JOIN rental r ON r.inventory_id=i.inventory_id
+    ORDER BY 3
+    ) table1
+    WHERE category IN ('Animation','Children','Classics' ,'Comedy','Family','Music')
 
 ### Question 3
 Finally, provide a table with the family-friendly film category, each of the quartiles, and the corresponding count of movies within each combination of film category for each corresponding rental duration category. The resulting table should have three columns:
@@ -144,11 +165,23 @@ The following table header provides a preview of what your table should look lik
 
 HINT: One way to solve this question requires the use of Percentiles, Window functions and Case statements.
 
+### Answer 3
 
-
-
-
-
+    SELECT category, standard_quartile, COUNT(film_title) count
+    FROM
+    (SELECT film_title, category,rental_duration, NTILE(4) OVER (ORDER BY rental_duration) standard_quartile
+    FROM
+    (SELECT DISTINCT(f.title) film_title, c.name category, f.rental_duration rental_duration
+    FROM category c
+    JOIN film_category fc ON c.category_id=fc.category_id
+    JOIN film f ON fc.film_id=f.film_id
+    JOIN inventory i ON f.film_id=i.film_id
+    JOIN rental r ON r.inventory_id=i.inventory_id
+    ORDER BY 3
+    ) table1
+    WHERE category IN ('Animation','Children','Classics' ,'Comedy','Family','Music')) table2
+    GROUP BY 1,2
+    ORDER BY 1,2
 
 
 
