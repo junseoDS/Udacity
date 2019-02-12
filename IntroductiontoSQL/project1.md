@@ -6,18 +6,18 @@
 >
 > For the presentation component, you will create four slides. Each slide will:
 >
->> Have a question of interest.
->>
->> Have a supporting SQL query needed to answer the question.
->>
->> Have a supporting visualization created using the final data of your SQL query that answers your question of interest.
->>
+> * Have a question of interest.
+>
+> * Have a supporting SQL query needed to answer the question.
+>
+> * Have a supporting visualization created using the final data of your SQL query that answers your question of interest.
+>
 > You will submit your project at the end of the project lessons. Your project will include:
 >
->> A set of slides with a question, visualization, and small summary on each slide.
->>
->> A text file with your queries needed to answer each of the four questions.
->>
+> * A set of slides with a question, visualization, and small summary on each slide.
+>
+> * A text file with your queries needed to answer each of the four questions.
+>
 > The essentials of your project submission are discussed on the page labeled as Project Submission.
 
 
@@ -234,6 +234,38 @@ The results are sorted first by customer name and then for each month.
 As you can see, total amounts per month are listed for each customer.
 
 HINT: One way to solve is to use a subquery, limit within the subquery, and use concatenation to generate the customer name.
+
+
+### Answer 2
+
+    SELECT permon.pay_month, top.full_name,permon.pay_countpermon,permon.pay_amount
+    FROM
+    (SELECT DATE_TRUNC('month',payment_date) pay_month, 
+           cus.first_name||' '||cus.last_name full_name, COUNT(payment_date) pay_countpermon, 
+           SUM(pay.amount) pay_amount
+    FROM payment pay
+    JOIN customer cus ON pay.customer_id=cus.customer_id
+    GROUP BY 1,2
+    ) permon
+    JOIN
+    (SELECT cus.first_name||' '||cus.last_name full_name, SUM(pay.amount) total_amount
+    FROM payment pay
+    JOIN customer cus ON pay.customer_id=cus.customer_id
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10) top
+    ON permon.full_name=top.full_name
+    ORDER BY 2,1
+
+
+
+
+
+
+
+
+
+
 
 ### Question 3
 Finally, for each of these top 10 paying customers, I would like to find out the difference across their monthly payments during 2007. 
