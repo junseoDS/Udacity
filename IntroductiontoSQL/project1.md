@@ -257,11 +257,33 @@ HINT: One way to solve is to use a subquery, limit within the subquery, and use 
     ON permon.full_name=top.full_name
     ORDER BY 2,1
 
+### Answer 2'
+    SELECT permon.pay_month, top.full_name, permon.pay_countpermon, permon.pay_amount
+    FROM
+    (
+    SELECT DATE_TRUNC('month',payment_date) pay_month, cus.first_name||' '||cus.last_name full_name, COUNT(payment_date) pay_countpermon, SUM(pay.amount) pay_amount
+    FROM payment pay
+    JOIN customer cus ON pay.customer_id=cus.customer_id
+    GROUP BY 1,2
+    ) permon
+    JOIN
+    (SELECT cus.first_name||' '||cus.last_name full_name, SUM(pay.amount) total_amount
+    FROM payment pay
+    JOIN customer cus ON pay.customer_id=cus.customer_id
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10) top
+    ON permon.full_name=top.full_name
 
-
-
-
-
+    WHERE top.full_name IN (SELECT full_name
+    FROM
+    (SELECT cus.first_name||' '||cus.last_name full_name, SUM(pay.amount) total_amount
+    FROM payment pay
+    JOIN customer cus ON pay.customer_id=cus.customer_id
+    GROUP BY 1
+    ORDER BY 2 DESC
+    LIMIT 10) top_name)
+    ORDER BY 2,1
 
 
 
@@ -277,6 +299,46 @@ Also, it will be tremendously helpful if you can identify the customer name who 
 The customer Eleanor Hunt paid the maximum difference of $64.87 during March 2007 from $22.95 in February of 2007.
 
 HINT: You can build on the previous questions query to add Window functions and aggregations to get the solution.
+
+### Answer 3
+
+    SELECT pay_month, full_name, pay_countpermon, pay_amount, 
+           LAG(pay_amount) OVER(PARTITION BY full_name ORDER BY pay_month) lag,
+           pay_amount-LAG(pay_amount) OVER(PARTITION BY full_name ORDER BY pay_month) diff
+    FROM
+        (SELECT permon.pay_month pay_month, top.full_name full_name, 
+                permon.pay_countpermon pay_countpermon, permon.pay_amount pay_amount
+        FROM
+            (SELECT DATE_TRUNC('month',payment_date) pay_month, cus.first_name||' '||cus.last_name full_name, 
+                    COUNT(payment_date) pay_countpermon, SUM(pay.amount) pay_amount
+            FROM payment pay
+            JOIN customer cus ON pay.customer_id=cus.customer_id
+            GROUP BY 1,2
+            ) permon
+        JOIN
+            (SELECT cus.first_name||' '||cus.last_name full_name, SUM(pay.amount) total_amount
+            FROM payment pay
+            JOIN customer cus ON pay.customer_id=cus.customer_id
+            GROUP BY 1
+            ORDER BY 2 DESC
+            LIMIT 10) top
+        ON permon.full_name=top.full_name
+        WHERE top.full_name IN (SELECT full_name
+                                FROM
+                                    (SELECT cus.first_name||' '||cus.last_name full_name, SUM(pay.amount) total_amount
+                                    FROM payment pay
+                                    JOIN customer cus ON pay.customer_id=cus.customer_id
+                                    GROUP BY 1
+                                    ORDER BY 2 DESC
+                                    LIMIT 10) top_name)
+         ORDER BY 2,1) whole
+
+
+
+
+
+
+
 
 
 
