@@ -196,6 +196,14 @@ The following table header provides a preview of what your table should look lik
 
 HINT: One way to solve this query is the use of aggregations.
 
+### Answer 1
+
+    SELECT DATE_PART('month',r.rental_date) rental_month, DATE_PART('year',r.rental_date) rental_year,s.store_id, COUNT(*)
+    FROM rental r
+    JOIN staff sf ON r.staff_id=sf.staff_id
+    JOIN store s ON s.store_id=sf.store_id
+    GROUP BY 1,2,3
+    ORDER BY 2,1,3
 
 
 ### Question 2
