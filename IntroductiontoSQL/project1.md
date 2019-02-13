@@ -450,3 +450,53 @@ ORDER BY 1) c_max
 ON c_max.country= total.country
 AND c_max.max_count = total.count_category
 
+### 배우별 수입
+
+SELECT ac.* , ac.first_name||' '||ac.last_name full_name
+FROM actor ac
+JOIN film_actor fa
+ON ac.actor_id =fa.actor_id
+JOIN film f
+ON f.film_id=fa.film_id
+JOIN inventory i
+ON f.film_id=i.film_id
+JOIN rental r
+ON i.inventory_id=r.inventory_id
+JOIN payment p
+ON r.rental_id=p.rental_id
+
+# top5
+SELECT full_name
+FROM
+(SELECT t1.full_name,COUNT(t1.title),SUM(t1.amount)
+FROM (SELECT ac.actor_id actor_id, ac.first_name||' '||ac.last_name full_name,p.amount amount, f.title title
+FROM actor ac
+JOIN film_actor fa
+ON ac.actor_id =fa.actor_id
+JOIN film f
+ON f.film_id=fa.film_id
+JOIN inventory i
+ON f.film_id=i.film_id
+JOIN rental r
+ON i.inventory_id=r.inventory_id
+JOIN payment p
+ON r.rental_id=p.rental_id
+ORDER BY 1 ) t1
+GROUP BY 1
+ORDER BY 3 DESC
+LIMIT 5) top5
+
+## 카테고리 별 갯수
+SELECT ac.first_name||' '||ac.last_name full_name, ca.name, COUNT(f.title)
+FROM category  ca
+JOIN film_category fc
+ON ca.category_id=fc.category_id
+JOIN film f
+ON f.film_id=fc.film_id
+JOIN film_actor fa
+ON f.film_id=fa.film_id
+JOIN actor ac
+ON ac.actor_id=fa.actor_id
+GROUP BY 1,2
+ORDER BY 1,3 DESC
+
