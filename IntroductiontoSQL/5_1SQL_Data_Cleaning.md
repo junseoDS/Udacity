@@ -43,4 +43,48 @@ They can have nested function, runs inner to outer.
 
     STRPOS(column_name , ' particular character')
     
+Both POSITION and STRPOS are *case sensitive
+
+So looking for A is different than looking for a.
+    
 ### LOWER & UPPER
+
+> If you want to pull an index regardless of the case of letter, 
+>
+> you should use LOWER or UPPER to make all of the characters lower or uppercase
+
+
+### CONCAT
+
+> combines values from several columns into one column
+>
+> or you can do it with piping ||
+
+    CONCAT(first,' ',last)
+
+OR
+
+    first||' '||last
+    
+### CAST
+
+> allows us to change columns from one data type to another.
+>
+> DATE_PART('month', TO_DATE(month, 'month')) here changed a month name into the number associated with that particular month.
+
+    CAST(year_data||month_data||day_data AS date)
+
+OR
+
+    (year_data||month_data||day_data) :: date
+
+### COALESCE
+
+> returns the first non-NULL value passed for each row
+
+
+
+
+
+
+
