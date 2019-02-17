@@ -47,20 +47,20 @@ Count the number of non-null records ; looking for non-null data and *text is no
 ## SUM
 
 > only can be used on numeric columns
-
+>
 > ignore null values
     
 
 ## MIN,MAX
 
 > can be used on numerical and non-numerical columns
-
+>
 > For MIN, the lowest number, earliest date, or early in the alphabet
     
 ## AVG
 
 > can be used on numerical columns ,     
-
+>
 > ignores null
 
 ## GROUP BY
@@ -68,10 +68,15 @@ Count the number of non-null records ; looking for non-null data and *text is no
 GROUP BY 
 
 > allows creating segments that will aggregate independent from one another
+>
 > goes in between the WHERE and ORDER BY 
+>
 > any column in the SELECT statement that is not with aggregatoe must be in the GROUP BY clause.
+>
 > ORDER BY works like SORT in spreadsheet
+>
 > multipe columns at once
+>
 > Reference the columns in SELECT statements in GROUP BY, ORDER BY clause with numbers (1,2,...)
 
 ## DISTINCT 
@@ -82,7 +87,9 @@ GROUP BY
 ## HAVING 
 
 > Clean way to filter a query that's been aggregated
+>
 > WHERE cannot filter on aggregate columns
+>
 > Syntax is same with WHERE
 
 ## DATE FUNCTION
@@ -100,11 +107,13 @@ In the Database
     YYYY MM DD
     
 > Easy to find most recent or oldest
+>
 > Easily truncated in order to group them for analysis
 
 ### DATE_TRUNC
 
 > Truncate date to particular part of date-time column.
+>
 > 'day', 'month', 'year' , 'dow' for day of the week
 
 ### DATE_PART
@@ -116,9 +125,13 @@ In the Database
 ## CASE
 
 > Handles "if", "then" logic
+>
 > goes in the SELECT clause
+>
 > must include WHEN, THEN, END. ELSE is optional
+>
 > can make any conditional statement using any conditional operation between WHEN and THEN
+>
 >> WHEN : condition
 >> THEN : if given condition is fitted, mark new name.
 >> END : closing CASE statement.
