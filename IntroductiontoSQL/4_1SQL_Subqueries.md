@@ -1,4 +1,4 @@
-# SQL Subqueries & Temporary Tables
+# LESSON 4 : SQL Subqueries & Temporary Tables
 
 ### Intro
 
