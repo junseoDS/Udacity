@@ -1,3 +1,5 @@
+# LESSION 3 : SQL Aggregations
+
 ## intro
 
 What I learned earlier
