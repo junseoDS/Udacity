@@ -23,4 +23,11 @@ Terminal Program : the program that we use to interact with the shell.
 > * Practive various command to perform different operations like navigating directories, fies organization, etc.
 >
 
+## Git Bash.
+
+If you are using Windows OS,
+
+go yo https://git-scm.com/download/win
+
+
 ### Open terminal
