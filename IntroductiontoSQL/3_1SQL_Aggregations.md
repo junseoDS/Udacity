@@ -133,7 +133,9 @@ In the Database
 > can make any conditional statement using any conditional operation between WHEN and THEN
 >
 >> WHEN : condition
+>>
 >> THEN : if given condition is fitted, mark new name.
+>>
 >> END : closing CASE statement.
 
 
