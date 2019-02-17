@@ -47,17 +47,20 @@ Count the number of non-null records ; looking for non-null data and *text is no
 ## SUM
 
 > only can be used on numeric columns
+
 > ignore null values
     
 
 ## MIN,MAX
 
 > can be used on numerical and non-numerical columns
+
 > For MIN, the lowest number, earliest date, or early in the alphabet
     
 ## AVG
 
 > can be used on numerical columns ,     
+
 > ignores null
 
 ## GROUP BY
