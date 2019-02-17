@@ -14,7 +14,6 @@ A single number (aggregated) can be more valuable
 Similiar syntax with Exel
 
 > COUNT, SUM, MIN, MAX, AVERAGE
-
 > Operating down columns
 
 ### NULL
@@ -34,5 +33,32 @@ Null is not value, *it's property of data
 Two common ways in which I'm likely to encounter NULLs :
 
 > * Performing LEFT or RIGHT JOIN
-
 > * Simply missing data in database
+
+## COUNT
+
+COUNT : counts the number of rows in a table
+
+    SELECT COUNT(*)
+    FROM accounts
+    
+Count the number of non-null records ; looking for non-null data and *text is not null
+
+## SUM
+
+SUM : only can be used on numeric columns
+    :ignore null values
+    
+
+## MIN,MAX
+
+MIN,MAX : can be used on numerical and non-numerical columns
+    For MIN, the lowest number, earliest date, or early in the alphabet
+    
+## AVG
+
+AVG : can be used on numerical columns ,     
+     ignores null
+
+
+
