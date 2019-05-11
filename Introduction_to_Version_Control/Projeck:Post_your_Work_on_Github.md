@@ -33,8 +33,20 @@ To complete this project, you will provide all the Git commands you used through
 4. See the next few pages for detailed instructions on the tasks you need to set up and edit your repository. Remember, as you complete these tasks, you should be copying and pasting the git commands you use into the submission template.
 
 
+### Submission Template: Git Commands Documentation
+
+There are five sections in this document template. Each section includes a table with the instructions for you to complete in your local and remote repository and space to copy and paste the git commands. Once you complete each task, you will be required to include or copy and paste the git command in that corresponding table row.
 
 
+Once you have completed entering the required responses within the tables in all four sections in this document, download this document as a PDF file. Please submit the PDF file of the Git Commands Documentation on the Project Submission page within the Udacity Classroom. There is also a place to add the url for your public GitHub repository in the first box. Add this link to the PDF, as your project will also be reviewed.
+
+## Tasks : Set up Your Repository
+
+### SECTION I: Set Up Your Repository
+The following are the steps you will take to work on the README markdown file, your BikeShare python file (project completed in the previous Python Lesson), and post the files to your GitHub profile.
+
+Step 1. Create a GitHub profile (if you don’t already have one).
+Step 2. Complete the tasks outlined below and add in the Required Responses in the Git Commands Documentation.
 
 
 
