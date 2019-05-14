@@ -51,13 +51,50 @@ Step 2. Complete the tasks outlined below and add in the Required Responses in t
 
 
 
+## Tasks : Improve Documentation
+
+### SECTION II: Improve Documentation
+In this section, you will be improving the documentation associated with your project.
+
+For this part, you will want to be a little familiar with markdown. For the most part, you can use regular text within a markdown file, but there are some easy ways to make the file more aesthetically appealing (bold, italic, headers, lists). There are resources at the bottom of this page if you need some assistance.
+
+Follow the tasks here to update your project documentation.
+
+
+### SECTION III: Additional Changes to Documentation
+In a real world situation, you or other members of your team would likely be making other changes to documentation on the documentation branch. To simulate this follow the tasks below.
+
+
+There is no one way to write a README file, however there are some general conventions for what it should include.
+
+1. General description of the project or content of the repository.
+2. List of what software, firmware and hardware you may require.
+3 .Installation instructions for the software and firmware.
+4. List of files included in the project.
+5. Copyright and licensing information.
+6. Acknowledgements and credits for any resources or blogs that helped you create the project.
+7. Known bugs
+8. Log of updates and revisions.
+
+You can see some useful documentation on README files on this GitHub resource located here.
+
+
+## Tasks : Refactor Code
+
+Refactoring is the goal of cleaning the code to make it leaner and more efficient, and to overall improve the design of the code without impacting the external functionality of the code.
+
+The following pages include some good examples of refactoring Python code:
+
+Pybit (https://pybit.es/refactoring.html)
+VisualStudio from Microsoft (https://docs.microsoft.com/en-us/visualstudio/python/refactoring-python-code?view=vs-2019)
+
+### SECTION IV: Refactor Code
+Follow the directions below to make changes to your code related to improving either the code speed or readability - this could be using built ins that will allow your code to run faster to changing the variable names used. The actual changes made don't matter for this project. The importance is in understanding workflow.
 
 
 
 
-
-
-
+## Tasks : Merging Branches
 
 
 
