@@ -1,0 +1,154 @@
+/* Query 1 */
+WITH ccc
+AS (SELECT
+  co.country country,
+  ca.name category,
+  COUNT(*) count_category
+FROM category ca
+JOIN film_category fc
+  ON ca.category_id = fc.category_id
+JOIN film f
+  ON f.film_id = fc.film_id
+JOIN inventory i
+  ON i.film_id = f.film_id
+JOIN rental r
+  ON i.inventory_id = r.inventory_id
+JOIN customer cus
+  ON cus.customer_id = r.customer_id
+JOIN address ad
+  ON ad.address_id = cus.address_id
+JOIN city c
+  ON ad.city_id = c.city_id
+JOIN country co
+  ON c.country_id = co.country_id
+GROUP BY 1,2         
+ORDER BY 1, 3 DESC),
+total
+AS (SELECT
+  ccc.*,
+  SUM(count_category) OVER (PARTITION BY country) total
+FROM ccc
+ORDER BY 1, 3 DESC)
+
+SELECT
+  total.*,
+  total.count_category / total.total ratio
+FROM total
+JOIN (SELECT
+  country,
+  MAX(count_category) max_count
+FROM ccc
+GROUP BY 1
+ORDER BY 1) c_max
+  ON c_max.country = total.country
+  AND c_max.max_count = total.count_category
+
+
+/* Query 2 */
+SELECT DISTINCT(category),SUM(count) OVER (PARTITION BY category)
+FROM
+(SELECT ac.first_name||' '||ac.last_name full_name, ca.name category, COUNT(f.title) count
+FROM category  ca
+JOIN film_category fc
+ON ca.category_id=fc.category_id
+JOIN film f
+ON f.film_id=fc.film_id
+JOIN film_actor fa
+ON f.film_id=fa.film_id
+JOIN actor ac
+ON ac.actor_id=fa.actor_id
+GROUP BY 1,2
+ORDER BY 1,3 DESC) ca_count
+WHERE full_name IN (SELECT full_name
+FROM
+(SELECT t1.full_name,COUNT(t1.title),SUM(t1.amount)
+FROM (SELECT ac.actor_id actor_id, ac.first_name||' '||ac.last_name full_name,p.amount amount, f.title title
+FROM actor ac
+JOIN film_actor fa
+ON ac.actor_id =fa.actor_id
+JOIN film f
+ON f.film_id=fa.film_id
+JOIN inventory i
+ON f.film_id=i.film_id
+JOIN rental r
+ON i.inventory_id=r.inventory_id
+JOIN payment p
+ON r.rental_id=p.rental_id
+ORDER BY 1 ) t1
+GROUP BY 1
+ORDER BY 3 DESC
+LIMIT 5) top5)
+ORDER BY 2 DESC
+
+
+/* Query 3 */
+SELECT
+  category,
+  standard_quartile,
+  COUNT(film_title) count
+FROM (SELECT
+  film_title,
+  category,
+  rental_duration,
+  NTILE(4) OVER (ORDER BY rental_duration) standard_quartile
+FROM (SELECT DISTINCT
+  (f.title) film_title,
+  c.name category,
+  f.rental_duration rental_duration
+FROM category c
+JOIN film_category fc
+  ON c.category_id = fc.category_id
+JOIN film f
+  ON fc.film_id = f.film_id
+JOIN inventory i
+  ON f.film_id = i.film_id
+JOIN rental r
+  ON r.inventory_id = i.inventory_id
+ORDER BY 3) table1
+WHERE category IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')) table2
+GROUP BY 1, 2
+ORDER BY 1, 2
+
+/* Query 4 */
+SELECT
+  pay_month, 
+  full_name, 
+  pay_countpermon,
+  pay_amount,          
+  LAG(pay_amount) OVER(PARTITION BY full_name ORDER BY pay_month) lag,
+  pay_amount-LAG(pay_amount) OVER(PARTITION BY full_name ORDER BY pay_month) diff
+FROM  (SELECT
+  permon.pay_month pay_month, 
+  top.full_name full_name, 
+  permon.pay_countpermon pay_countpermon,
+  permon.pay_amount pay_amount
+FROM (SELECT 
+  DATE_TRUNC('month',payment_date) pay_month, 
+  cus.first_name||' '||cus.last_name full_name, 
+  COUNT(payment_date) pay_countpermon, 
+  SUM(pay.amount) pay_amount
+FROM payment pay
+JOIN customer cus 
+ON pay.customer_id=cus.customer_id
+GROUP BY 1,2 ) permon
+JOIN (SELECT 
+  cus.first_name||' '||cus.last_name full_name,
+  SUM(pay.amount) total_amount
+FROM payment pay
+JOIN customer cus
+ON pay.customer_id=cus.customer_id
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10) top
+ON permon.full_name=top.full_name
+WHERE top.full_name IN (SELECT full_name
+  FROM (SELECT 
+  cus.first_name||' '||cus.last_name full_name, 
+  SUM(pay.amount) total_amount
+FROM payment pay
+JOIN customer cus 
+ON pay.customer_id=cus.customer_id
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 10) top_name)
+ORDER BY 2,1) whole
