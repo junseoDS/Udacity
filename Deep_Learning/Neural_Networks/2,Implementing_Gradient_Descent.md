@@ -234,7 +234,36 @@ After you've written these parts, run the training by pressing "Test Run". The M
 
 Feel free to play with the hyperparameters and see how it changes the MSE.
 
+#### data_prep.py
+
+        import numpy as np
+        import pandas as pd
+
+        admissions = pd.read_csv('binary.csv')
+
+        # Make dummy variables for rank
+        data = pd.concat([admissions, pd.get_dummies(admissions['rank'], prefix='rank')], axis=1)
+        data = data.drop('rank', axis=1)
+
+        # Standarize features
+        for field in ['gre', 'gpa']:
+            mean, std = data[field].mean(), data[field].std()
+            data.loc[:,field] = (data[field]-mean)/std
+
+        # Split off random 10% of the data for testing
+        np.random.seed(42)
+        sample = np.random.choice(data.index, size=int(len(data)*0.9), replace=False)
+        data, test_data = data.ix[sample], data.drop(sample)
+
+        # Split into features and targets
+        features, targets = data.drop('admit', axis=1), data['admit']
+        features_test, targets_test = test_data.drop('admit', axis=1), test_data['admit']
+
+
+
+
 ### gradient.py
+
 
     import numpy as np
     from data_prep import features, targets, features_test, targets_test
@@ -274,20 +303,20 @@ Feel free to play with the hyperparameters and see how it changes the MSE.
             #       the h together with the output
 
             # TODO: Calculate the output
-            output = None
+            output = sigmoid(np.dot(x,weights))
 
             # TODO: Calculate the error
-            error = None
+            error = y-output
 
             # TODO: Calculate the error term
-            error_term = None
+            error_term = error*output*(1-output)
 
             # TODO: Calculate the change in weights for this sample
             #       and add it to the total weight change
-            del_w += 0
+            del_w += error_term*x
 
         # TODO: Update weights using the learning rate and the average change in weights
-        weights += 0
+        weights += learnrate*del_w/n_records
 
         # Printing out the mean square error on the training set
         if e % (epochs / 10) == 0:
@@ -312,10 +341,410 @@ Feel free to play with the hyperparameters and see how it changes the MSE.
 
 
 
+## Multilayer Perceptrons 
+
+
+### Implementing the hidden layer
+
+##### Prerequisites
+
+Below, we are going to walk through the math of neural networks in a multilayer perceptron. With multiple perceptrons, we are going to move to using vectors and matrices. To brush up, be sure to view the following:
+
+1. Khan Academy's [introduction to vectors](https://www.khanacademy.org/math/linear-algebra/vectors-and-spaces/vectors/v/vector-introduction-linear-algebra.
+2. Khan Academy's [introduction to matrices](https://www.khanacademy.org/math/precalculus/precalc-matrices).
+
+##### Derivation
+
+Before, we were dealing with only one output node which made the code straightforward. However now that we have multiple input units and multiple hidden units, the weights between them will require two indices: w_{ij}  where ii denotes input units and jj are the hidden units.
+
+
+
+But now, the weights need to be stored in a matrix, indexed as w_ij. Each row in the matrix will correspond to the weights leading out of a single input unit, and each column will correspond to the weights leading in to a single hidden unit.
+
+
+Be sure to compare the matrix above with the diagram shown before it so you can see where the different weights in the network end up in the matrix.
+
+To initialize these weights in NumPy, we have to provide the shape of the matrix. If features is a 2D array containing the input data:
+
+    # Number of records and input units
+    n_records, n_inputs = features.shape
+    # Number of hidden units
+    n_hidden = 2
+    weights_input_to_hidden = np.random.normal(0, n_inputs**-0.5, size=(n_inputs, n_hidden))
+
+This creates a 2D array (i.e. a matrix) named weights_input_to_hidden with dimensions n_inputs by n_hidden. Remember how the input to a hidden unit is the sum of all the inputs multiplied by the hidden unit's weights.
+
+
+To do that, we now need to use [matrix multiplication](https://en.wikipedia.org/wiki/Matrix_multiplication). If your linear algebra is rusty, I suggest taking a look at the suggested resources in the prerequisites section. For this part though, you'll only need to know how to multiply a matrix with a vector.
+
+In this case, we're multiplying the inputs (a row vector here) by the weights. To do this, you take the dot (inner) product of the inputs with each column in the weights matrix. For example, to calculate the input to the first hidden unit, j = 1, you'd take the dot product of the inputs with the first column of the weights matrix,
+
+
+And for the second hidden layer input, you calculate the dot product of the inputs with the second column. And so on and so forth.
+
+In NumPy, you can do this for all the inputs and all the outputs at once using np.dot
+
+    hidden_inputs = np.dot(inputs, weights_input_to_hidden)
+
+You could also define your weights matrix such that it has dimensions n_hidden by n_inputs then multiply like so where the inputs form a column vector
+
+
+__Note__: The weight indices have changed in the above image and no longer match up with the labels used in the earlier diagrams. That's because, in matrix notation, the row index always precedes the column index, so it would be misleading to label them the way we did in the neural net diagram. Just keep in mind that this is the same weight matrix as before, but rotated so the first column is now the first row, and the second column is now the second row. If we were to use the labels from the earlier diagram, the weights would fit into the matrix in the following locations
+
+
+The important thing with matrix multiplication is that the dimensions match. For matrix multiplication to work, there has to be the same number of elements in the dot products. In the first example, there are three columns in the input vector, and three rows in the weights matrix. In the second example, there are three columns in the weights matrix and three rows in the input vector. If the dimensions don't match, you'll get this:
+
+    # Same weights and features as above, but swapped the order
+    hidden_inputs = np.dot(weights_input_to_hidden, features)
+    ---------------------------------------------------------------------------
+    ValueError                                Traceback (most recent call last)
+    <ipython-input-11-1bfa0f615c45> in <module>()
+    ----> 1 hidden_in = np.dot(weights_input_to_hidden, X)
+    
+    ValueError: shapes (3,2) and (3,) not aligned: 2 (dim 1) != 3 (dim 0)
+
+The dot product can't be computed for a 3x2 matrix and 3-element array. That's because the 2 columns in the matrix don't match the number of elements in the array.
+
+
+
+The rule is that if you're multiplying an array from the left, the array must have the same number of elements as there are rows in the matrix. And if you're multiplying the matrix from the left, the number of columns in the matrix must equal the number of elements in the array on the right.
+
+
+### Making a column vector
+
+You see above that sometimes you'll want a column vector, even though by default NumPy arrays work like row vectors. It's possible to get the transpose of an array like so arr.T, but for a 1D array, the transpose will return a row vector. Instead, use arr[:,None] to create a column vector:
+
+
+    print(features)
+    > array([ 0.49671415, -0.1382643 ,  0.64768854])
+
+    print(features.T)
+    > array([ 0.49671415, -0.1382643 ,  0.64768854])
+
+    print(features[:, None])
+    > array([[ 0.49671415],
+           [-0.1382643 ],
+           [ 0.64768854]])
+
+Alternatively, you can create arrays with two dimensions. Then, you can use arr.T to get the column vector.
+
+
+    np.array(features, ndmin=2)
+    > array([[ 0.49671415, -0.1382643 ,  0.64768854]])
+
+    np.array(features, ndmin=2).T
+    > array([[ 0.49671415],
+           [-0.1382643 ],
+           [ 0.64768854]])
+
+I personally prefer keeping all vectors as 1D arrays, it just works better in my head.
+
+
+### Programming quiz
+
+Below, you'll implement a forward pass through a 4x3x2 network, with sigmoid activation functions for both layers.
+
+Things to do:
+
+* Calculate the input to the hidden layer.
+* Calculate the hidden layer output.
+* Calculate the input to the output layer.
+* Calculate the output of the network.
+
+
+
+### multilayer.py
+
+
+    import numpy as np
+
+    def sigmoid(x):
+        """
+        Calculate sigmoid
+        """
+        return 1/(1+np.exp(-x))
+
+    # Network size
+    N_input = 4
+    N_hidden = 3
+    N_output = 2
+
+    np.random.seed(42)
+    # Make some fake data
+    X = np.random.randn(4)
+
+    weights_input_to_hidden = np.random.normal(0, scale=0.1, size=(N_input, N_hidden))
+    weights_hidden_to_output = np.random.normal(0, scale=0.1, size=(N_hidden, N_output))
+
+
+    # TODO: Make a forward pass through the network
+
+    hidden_layer_in = np.dot(X,weights_input_to_hidden)
+    hidden_layer_out = sigmoid(hidden_layer_in)
+
+    print('Hidden-layer Output:')
+    print(hidden_layer_out)
+
+    output_layer_in = np.dot(hidden_layer_out,weights_hidden_to_output)
+    output_layer_out = sigmoid(output_layer_in)
+
+    print('Output-layer Output:')
+    print(output_layer_out)
 
 
 
 
+
+## Backpropagation
+
+### Backpropagation
+Now we've come to the problem of how to make a multilayer neural network learn. Before, we saw how to update weights with gradient descent. The backpropagation algorithm is just an extension of that, using the chain rule to find the error with the respect to the weights connecting the input layer to the hidden layer (for a two layer network).
+
+To update the weights to hidden layers using gradient descent, you need to know how much error each of the hidden units contributed to the final output. Since the output of a layer is determined by the weights between layers, the error resulting from units is scaled by the weights going forward through the network. Since we know the error at the output, we can use the weights to work backwards to hidden layers.
+
+For example, in the output layer, you have errors δ_k^o  attributed to each output unit kk. Then, the error attributed to hidden unit jj is the output errors, scaled by the weights between the output and hidden layers (and the gradient)
+
+Then, the gradient descent step is the same as before, just with the new errors where w_ij are the weights between the inputs and hidden layer and x_i are input unit values. This form holds for however many layers there are. The weight steps are equal to the step size times the output error of the layer times the values of the inputs to that layer
+
+Here, you get the output error, δ_output, by propagating the errors backwards from higher layers. And the input values, V_in  are the inputs to the layer, the hidden layer activations to the output unit for example.
+
+
+
+### Implementing in NumPy
+For the most part you have everything you need to implement backpropagation with NumPy.
+
+However, previously we were only dealing with error terms from one unit. Now, in the weight update, we have to consider the error for each unit in the hidden layer, δ_j :
+
+Δw_ij=ηδ_j x_i	 
+
+Firstly, there will likely be a different number of input and hidden units, so trying to multiply the errors and the inputs as row vectors will throw an error:
+
+    hidden_error*inputs
+    ---------------------------------------------------------------------------
+    ValueError                                Traceback (most recent call last)
+    <ipython-input-22-3b59121cb809> in <module>()
+    ----> 1 hidden_error*x
+
+    ValueError: operands could not be broadcast together with shapes (3,) (6,) 
+
+Also, w_ij is a matrix now, so the right side of the assignment must have the same shape as the left side. Luckily, NumPy takes care of this for us. If you multiply a row vector array with a column vector array, it will multiply the first element in the column by each element in the row vector and set that as the first row in a new 2D array. This continues for each element in the column vector, so you get a 2D array that has shape (len(column_vector), len(row_vector)).
+
+    hidden_error*inputs[:,None]
+    array([[ -8.24195994e-04,  -2.71771975e-04,   1.29713395e-03],
+           [ -2.87777394e-04,  -9.48922722e-05,   4.52909055e-04],
+           [  6.44605731e-04,   2.12553536e-04,  -1.01449168e-03],
+           [  0.00000000e+00,   0.00000000e+00,  -0.00000000e+00],
+           [  0.00000000e+00,   0.00000000e+00,  -0.00000000e+00],
+           [  0.00000000e+00,   0.00000000e+00,  -0.00000000e+00]])
+
+It turns out this is exactly how we want to calculate the weight update step. As before, if you have your inputs as a 2D array with one row, you can also do hidden_error*inputs.T, but that won't work if inputs is a 1D array.
+
+
+
+### Backpropagation exercise
+
+Below, you'll implement the code to calculate one backpropagation update step for two sets of weights. I wrote the forward pass - your goal is to code the backward pass.
+
+Things to do
+
+* Calculate the network's output error.
+* Calculate the output layer's error term.
+* Use backpropagation to calculate the hidden layer's error term.
+* Calculate the change in weights (the delta weights) that result from propagating the errors back through the network.
+
+
+
+
+### backprop.py
+
+
+    import numpy as np
+
+
+    def sigmoid(x):
+        """
+        Calculate sigmoid
+        """
+        return 1 / (1 + np.exp(-x))
+
+
+    x = np.array([0.5, 0.1, -0.2])
+    target = 0.6
+    learnrate = 0.5
+
+    weights_input_hidden = np.array([[0.5, -0.6],
+                                     [0.1, -0.2],
+                                     [0.1, 0.7]])
+
+    weights_hidden_output = np.array([0.1, -0.3])
+
+    ## Forward pass
+    hidden_layer_input = np.dot(x, weights_input_hidden)
+    hidden_layer_output = sigmoid(hidden_layer_input)
+
+    output_layer_in = np.dot(hidden_layer_output, weights_hidden_output)
+    output = sigmoid(output_layer_in)
+
+    ## Backwards pass
+    ## TODO: Calculate output error
+    error = target - output
+
+    # TODO: Calculate error term for output layer
+    output_error_term = error*output*(1-output)
+
+    # TODO: Calculate error term for hidden layer
+    hidden_error_term = np.dot(output_error_term,weights_hidden_output)*hidden_layer_output*\
+                        (1-hidden_layer_output)
+
+    # TODO: Calculate change in weights for hidden layer to output layer
+    delta_w_h_o = learnrate*output_error_term*hidden_layer_output
+
+    # TODO: Calculate change in weights for input layer to hidden layer
+    delta_w_i_h = learnrate*hidden_error_term*x[:,None]
+
+    print('Change in weights for hidden layer to output layer:')
+    print(delta_w_h_o)
+    print('Change in weights for input layer to hidden layer:')
+    print(delta_w_i_h)
+
+
+
+
+## Implemeting Backpropagation
+
+### Implementing backpropagation
+
+
+For now we'll only consider a simple network with one hidden layer and one output unit. Here's the general algorithm for updating the weights with backpropagation:
+
+* Set the weight steps for each layer to zero
+    * The input to hidden weights Δw_ij=0
+    * The hidden to output weights ΔW_j =0
+
+* For each record in the training data:
+
+    * Make a forward pass through the network, calculating the output y^ 
+    * Calculate the error gradient in the output unit, δ = (y−y^ )f′ (z) where z = \sum_j W_j a_jz=∑_j W_j a_j , the input to the output unit.
+    * Propagate the errors to the hidden layer δ_j^h = δ^o W_j f′(h_j )
+    * Update the weight steps:
+     * ΔW_j	 = ΔW_j +δ^o a_j	 
+     * Δw_ij = Δw_ij +δ_j^h	 a_i	 
+
+* Update the weights, where \etaη is the learning rate and mm is the number of records:
+
+W_j = W_j + ηΔW_i /m
+w_{ij} = w_{ij} + ηΔW_{ij} / m
+
+* Repeat for ee epochs.
+
+
+### Backpropagation exercise
+
+Now you're going to implement the backprop algorithm for a network trained on the graduate school admission data. You should have everything you need from the previous exercises to complete this one.
+
+
+Your goals here:
+
+* Implement the forward pass.
+* Implement the backpropagation algorithm.
+* Update the weights
+
+
+
+### backprop.by
+
+
+    import numpy as np
+    from data_prep import features, targets, features_test, targets_test
+
+    np.random.seed(21)
+
+    def sigmoid(x):
+        """
+        Calculate sigmoid
+        """
+        return 1 / (1 + np.exp(-x))
+
+
+    # Hyperparameters
+    n_hidden = 2  # number of hidden units
+    epochs = 900
+    learnrate = 0.005
+
+    n_records, n_features = features.shape
+    last_loss = None
+    # Initialize weights
+    weights_input_hidden = np.random.normal(scale=1 / n_features ** .5,
+                                            size=(n_features, n_hidden))
+    weights_hidden_output = np.random.normal(scale=1 / n_features ** .5,
+                                             size=n_hidden)
+
+    for e in range(epochs):
+        del_w_input_hidden = np.zeros(weights_input_hidden.shape)
+        del_w_hidden_output = np.zeros(weights_hidden_output.shape)
+        for x, y in zip(features.values, targets):
+            ## Forward pass ##
+            # TODO: Calculate the output
+            hidden_input = np.dot(x, weights_input_hidden)
+            hidden_output = sigmoid(hidden_input)
+
+            output = sigmoid(np.dot(hidden_output,
+                                    weights_hidden_output))
+
+            ## Backward pass ##
+            # TODO: Calculate the network's prediction error
+            error = y - output
+
+            # TODO: Calculate error term for the output unit
+            output_error_term = error * output * (1 - output)
+
+            ## propagate errors to hidden layer
+
+            # TODO: Calculate the hidden layer's contribution to the error
+            hidden_error = np.dot(output_error_term, weights_hidden_output)
+
+            # TODO: Calculate the error term for the hidden layer
+            hidden_error_term = hidden_error * hidden_output * (1 - hidden_output)
+
+            # TODO: Update the change in weights
+            del_w_hidden_output += output_error_term * hidden_output
+            del_w_input_hidden += hidden_error_term * x[:, None]
+
+        # TODO: Update weights
+        weights_input_hidden += learnrate * del_w_input_hidden / n_records
+        weights_hidden_output += learnrate * del_w_hidden_output / n_records
+
+        # Printing out the mean square error on the training set
+        if e % (epochs / 10) == 0:
+            hidden_output = sigmoid(np.dot(x, weights_input_hidden))
+            out = sigmoid(np.dot(hidden_output,
+                                 weights_hidden_output))
+            loss = np.mean((out - targets) ** 2)
+
+            if last_loss and last_loss < loss:
+                print("Train loss: ", loss, "  WARNING - Loss Increasing")
+            else:
+                print("Train loss: ", loss)
+            last_loss = loss
+
+    # Calculate accuracy on test data
+    hidden = sigmoid(np.dot(features_test, weights_input_hidden))
+    out = sigmoid(np.dot(hidden, weights_hidden_output))
+    predictions = out > 0.5
+    accuracy = np.mean(predictions == targets_test)
+    print("Prediction accuracy: {:.3f}".format(accuracy))
+
+
+
+
+### Further Reading 
+
+
+Backpropagation is fundamental to deep learning. TensorFlow and other libraries will perform the backprop for you, but you should really really understand the algorithm. We'll be going over backprop again, but here are some extra resources for you:
+
+* From Andrej Karpathy: [Yes, you should understand backprop](https://medium.com/@karpathy/yes-you-should-understand-backprop-e2f06eab496b)
+
+* Also from Andrej Karpathy, [a lecture from Stanford's CS231n course](https://www.youtube.com/watch?v=59Hbtz7XgjM)
 
 
 
