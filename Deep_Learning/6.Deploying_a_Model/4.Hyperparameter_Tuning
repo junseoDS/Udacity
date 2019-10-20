@@ -1,0 +1,36 @@
+# Hyperparameter Tuning
+
+## Hyperparameter Tuning
+
+In this lesson, we are going to take a look at how we can improve our models using one of SageMaker's features. In particular, we are going to explore how we can use SageMaker to perform hyperparameter tuning.
+
+In many machine learning models there are some parameters that need to be specified by the model creator and which can't be determined directly from the data itself. Generally the approach to finding the best parameters is to train a bunch of models with different parameters and then choose the model that works best.
+
+SageMaker provides an automated way of doing this. In fact, SageMaker also does this in an intelligent way using Bayesian optimization. What we will do is specify ranges for our hyperparameters. Then, SageMaker will explore different choices within those ranges, increasing the performance of our model over time.
+
+In addition to learning how to use hyperparameter tuning, we will look at Amazon's CloudWatch service. For our purposes, CloudWatch provides a user interface through which we can examine various logs generated during training. This can be especially useful when diagnosing errors.
+
+
+## Introduction to Hyperparameter Tuning
+Let's take a look at how we can use SageMaker to improve our Boston housing model.
+
+Essentially, tuning a model means training a bunch of models, each with different hyperparameters, and then choosing the best performing model. Of course, we still need to describe two different aspects of hyperparameter tuning:
+
+1) What is a bunch of models? In other words, how many different models should we train?
+
+2) Which model is the best model? In other words, what sort of metric should we use in order to distinguish how well one model performs relative to another.
+
+## Boston Housing Example - Tuning the Model
+
+
+ To following along, open up the Boston Housing - XGBoost (Hyperparameter Tuning) - High Level.ipynb notebook in the Tutorials directory.
+ 
+ Generally speaking, the way to think about hyperparameter tuning inside of SageMaker is that we start with a base collection of hyperparameters which describe a default model. We then give some additional set of hyperparameters ranges. These ranges tell SageMaker which hyperparameters can be varied, with the goal being to improve the default model.
+
+We then describe how to compare models, which in our instance is just by way of specifying a metric. Then we describe how many total models we want SageMaker to train.
+
+__Note__: In addition to creating a tuned model in this notebook, we also saw how the attach method can be used to create an Estimator object which is attached to an already completed training job. This method is useful in other situations as well.
+
+You will notice that throughout this module we train the same model multiple times. In most of the Boston Housing notebooks, for example, we train an XGBoost model with the same hyperparameters. The reason for this is so that each notebook is self contained and can be run even if you haven't run the other notebooks.
+
+In your case however, you've probably already created an XGBoost model on the Boston Housing training set with the standard hyperparameters. If you wanted to, you could use the attach method to avoid having to re-train the model.
